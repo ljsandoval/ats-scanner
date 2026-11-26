@@ -22,6 +22,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ScanResult:
     new_jobs: list[Job] = field(default_factory=list)
+    # Everything passing the filters, before the history check. `new_jobs` is the
+    # subset not seen before; priming needs the whole set.
+    matched_jobs: list[Job] = field(default_factory=list)
     companies_scanned: int = 0
     total_fetched: int = 0
     errors: list[tuple[str, str]] = field(default_factory=list)  # (company, message)
@@ -51,6 +54,7 @@ def run_scan(watchlist: Watchlist, http: HttpClient, history: ScanHistory) -> Sc
 
         jobs = apply_title_filter(jobs, watchlist.title_filter)
         jobs = apply_location_filter(jobs, watchlist.location_filter)
+        result.matched_jobs.extend(jobs)
         new_jobs = [j for j in jobs if not history.is_seen(j.url)]
         result.new_jobs.extend(new_jobs)
 

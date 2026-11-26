@@ -75,3 +75,24 @@ def test_unmatched_company_records_error_but_continues(httpx_mock, tmp_path, lev
     assert len(result.errors) == 1
     assert result.errors[0][0] == "Unknown"
     assert {j.title for j in result.new_jobs} == {"Data Platform Engineer"}
+
+
+def test_matched_jobs_holds_everything_new_jobs_filters(
+    httpx_mock, tmp_path, greenhouse_payload, lever_payload
+):
+    """matched_jobs ignores history; new_jobs is the subset not seen before."""
+    httpx_mock.add_response(url=GH_API, json=greenhouse_payload)
+    httpx_mock.add_response(url=LEVER_API, json=lever_payload)
+
+    history = ScanHistory(tmp_path / "h.tsv")
+    with HttpClient() as http:
+        first = run_scan(_watchlist(), http, history)
+    history.record(first.new_jobs)
+
+    httpx_mock.add_response(url=GH_API, json=greenhouse_payload)
+    httpx_mock.add_response(url=LEVER_API, json=lever_payload)
+    with HttpClient() as http:
+        second = run_scan(_watchlist(), http, history)
+
+    assert second.new_jobs == []  # all already reported
+    assert len(second.matched_jobs) == 3  # but still matching the filters

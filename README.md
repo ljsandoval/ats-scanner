@@ -18,6 +18,7 @@ This is a Python port of the zero-token scanner in
 uv sync
 cp config/watchlist.example.yaml config/watchlist.yaml   # edit with your companies
 uv run ats-scanner scan --dry-run                        # scan, print, write nothing
+uv run ats-scanner scan --prime                          # seed history, report nothing
 uv run ats-scanner scan                                  # writes to ./output/
 ```
 
@@ -49,8 +50,16 @@ ats-scanner scan
   --no-md           skip markdown output
   --no-json         skip JSON output
   --dry-run         scan and print counts; write nothing
+  --prime           record every current match to history without reporting it
   -v/--verbose      debug logging
 ```
+
+`--prime` and `--dry-run` are mutually exclusive.
+
+**Prime a newly seeded watchlist before the first real scan.** Adding companies
+makes every one of their current postings count as new, so an unprimed first run
+reports hundreds of roles at once and is unreadable. Priming records them as seen
+and reports nothing; the next scan then shows only what has appeared since.
 
 ## Watchlist format
 

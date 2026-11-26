@@ -27,8 +27,15 @@ def _build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--history", default="./data/scan-history.tsv", help="dedup TSV path")
     scan.add_argument("--no-md", action="store_true", help="skip markdown output")
     scan.add_argument("--no-json", action="store_true", help="skip JSON output")
-    scan.add_argument(
+    mode = scan.add_mutually_exclusive_group()
+    mode.add_argument(
         "--dry-run", action="store_true", help="scan and print counts; write nothing"
+    )
+    mode.add_argument(
+        "--prime",
+        action="store_true",
+        help="record every current match to history without reporting it, so the "
+        "first real scan of a newly seeded watchlist is not flooded",
     )
     scan.add_argument("-v", "--verbose", action="store_true", help="debug logging")
     return parser
@@ -64,6 +71,21 @@ def _run_scan(args: argparse.Namespace) -> int:
         print(f"[dry-run] {summary} — nothing written")
         for job in result.new_jobs:
             print(f"  - {job.company}: {job.title} ({job.location or 'n/a'})")
+        return 0
+
+    if args.prime:
+        # Seed history with everything currently matching, reporting none of it.
+        # Uses matched_jobs, not new_jobs: on a re-prime the already-seen ones
+        # must be refreshed too, or they stay due to resurface.
+        recorded = history.record(result.matched_jobs)
+        print(
+            f"[prime] {len(result.matched_jobs)} match(es) across "
+            f"{result.companies_scanned} company(ies); {recorded} recorded to history, "
+            "nothing reported"
+        )
+        if result.errors:
+            for company, msg in result.errors:
+                print(f"  error {company}: {msg}")
         return 0
 
     written = write_outputs(
