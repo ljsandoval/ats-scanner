@@ -49,11 +49,21 @@ class ScanHistory:
         return age < timedelta(days=self.recheck_after_days)
 
     def record(self, jobs: list[Job], *, status: str = "active") -> int:
-        """Append newly seen job URLs to the TSV. Returns how many were added."""
+        """Append reported job URLs to the TSV. Returns how many rows were written.
+
+        Records a URL when it is unseen OR when it has aged past the recheck window,
+        which is exactly the set `is_seen()` lets through. Re-recording refreshes
+        `first_seen`, so a long-lived posting goes quiet again after being
+        re-reported; without that it would surface on every subsequent run.
+
+        The file is append-only, so a re-recorded URL gains a second row. `_load()`
+        takes the last row for a URL, and rows are appended in chronological order,
+        so the newest date wins and the earlier rows stay as an audit trail.
+        """
         today = date.today().isoformat()
         new_rows = []
         for job in jobs:
-            if job.url not in self._seen:
+            if not self.is_seen(job.url):
                 new_rows.append((job.url, status, today))
                 self._seen[job.url] = date.today()
         if not new_rows:

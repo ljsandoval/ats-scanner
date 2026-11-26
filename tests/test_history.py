@@ -47,3 +47,25 @@ def test_header_row_not_treated_as_url(tmp_path):
     h.record([_job("https://a/1")])
     h2 = ScanHistory(path)
     assert h2.is_seen("url") is False
+
+
+def test_reeligible_job_is_rerecorded_and_not_reported_forever(tmp_path):
+    """A job past the recheck window is reported once, then goes quiet again.
+
+    The defect this covers: `record()` used to append only URLs it had never seen,
+    so a re-eligible job was re-reported, never got a fresh `first_seen`, and then
+    surfaced on every single run from then on.
+    """
+    path = tmp_path / "history.tsv"
+    old = (date.today() - timedelta(days=40)).isoformat()
+    path.write_text(f"url\tstatus\tfirst_seen\nhttps://a/1\tactive\t{old}\n")
+
+    # Run 1: 40 days old against a 30 day window, so it is reported again...
+    run1 = ScanHistory(path, recheck_after_days=30)
+    assert run1.is_seen("https://a/1") is False
+    # ...and recording it must refresh first_seen, not silently skip it.
+    assert run1.record([_job("https://a/1")]) == 1
+
+    # Run 2: a fresh instance reads the refreshed date and stays quiet.
+    run2 = ScanHistory(path, recheck_after_days=30)
+    assert run2.is_seen("https://a/1") is True
