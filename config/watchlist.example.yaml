@@ -1,0 +1,63 @@
+# ats-scanner watchlist
+#
+# Copy this file to config/watchlist.yaml and edit it. The real watchlist.yaml is
+# gitignored (it is your personal target list); this .example.yaml is the template.
+#
+# The scanner polls each company's public ATS board (Greenhouse, Lever) for postings,
+# filters them by title and location, drops ones it has already reported, and writes
+# the new matches to the output directory. Zero LLM tokens, no browser, no auth.
+
+# --- Title filter ---
+# Case-insensitive substring matching against the job title.
+#   - keep if (positive is empty OR any positive matches) AND no negative matches
+title_filter:
+  positive:
+    - "data engineer"
+    - "data platform"
+    - "analytics engineer"
+    - "software engineer"
+  negative:
+    - "intern"
+    - "manager"
+    - "director"
+
+# --- Location filter (optional) ---
+# Case-insensitive substring matching against the job location, in this order:
+#   - empty location on the job -> pass (do not penalize missing data)
+#   - any always_allow keyword present -> pass (rescues multi-location postings)
+#   - any block keyword present -> reject
+#   - allow empty -> pass (already cleared block)
+#   - allow non-empty -> must match at least one keyword
+# Omit this whole block to accept all locations.
+location_filter:
+  always_allow:
+    - "Portland"
+    - "Oregon"
+    - "Remote"
+  allow:
+    - "Remote"
+    - "United States"
+    - "USA"
+  block:
+    - "India"
+    - "United Kingdom"
+    - "Germany"
+
+# --- Scan history (optional) ---
+# URLs already reported are deduped forever by default. Set recheck_after_days to let
+# an old URL become eligible again after N days (useful for reposted roles).
+scan_history:
+  recheck_after_days: 30
+
+# --- Companies to watch ---
+# Each entry needs a careers_url the scanner can map to an ATS API. Supported hosts:
+#   Greenhouse: https://job-boards.greenhouse.io/<slug>
+#   Lever:      https://jobs.lever.co/<slug>
+# Optional per-entry keys: enabled (default true), provider (force a provider id),
+# api (explicit API URL, Greenhouse only).
+tracked_companies:
+  - name: "Care Access"
+    careers_url: "https://job-boards.greenhouse.io/careaccess"
+  - name: "Example Lever Co"
+    careers_url: "https://jobs.lever.co/example"
+    enabled: false

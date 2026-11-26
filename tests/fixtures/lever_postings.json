@@ -1,0 +1,18 @@
+[
+  {
+    "id": "abc-123",
+    "text": "Data Platform Engineer",
+    "hostedUrl": "https://jobs.lever.co/example/abc-123",
+    "categories": { "location": "Remote (US)" },
+    "descriptionPlain": "Build and own the data platform. Python, Spark, Airflow.",
+    "createdAt": 1751500000000
+  },
+  {
+    "id": "def-456",
+    "text": "Account Executive",
+    "hostedUrl": "https://jobs.lever.co/example/def-456",
+    "categories": { "location": "London, UK" },
+    "descriptionPlain": "Own the sales pipeline.",
+    "createdAt": 1751400000000
+  }
+]
