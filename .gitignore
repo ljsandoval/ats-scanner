@@ -39,3 +39,8 @@ Thumbs.db
 # Scanner runtime state + output (not source)
 /output/
 /data/
+# The user's own target list — the tool manages this; only the example ships
+config/watchlist.yaml
+
+# Trial scratch area (not source, not state)
+/scratch/
